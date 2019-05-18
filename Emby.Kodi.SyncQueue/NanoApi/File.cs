@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using Emby.Kodi.SyncQueue.Data;
+using System.Threading;
 
 namespace NanoApi
 {
@@ -94,7 +95,7 @@ namespace NanoApi
                 if (this.encoding == null)
                     this.strDataCache = DbRepo.fileSystem.ReadAllText(path);
                 else
-                    this.strDataCache = DbRepo.fileSystem.ReadAllText(path, this.encoding);
+                    this.strDataCache = DbRepo.fileSystem.ReadAllTextAsync(path, this.encoding, CancellationToken.None).Result;
                 this.lastTS = new DateTimeOffset?(lastWriteTime);
             }
             Foo<T> foo = DbRepo.json.DeserializeFromString<Foo<T>>(this.strDataCache);
