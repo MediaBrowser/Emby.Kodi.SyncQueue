@@ -16,31 +16,6 @@ namespace Emby.Kodi.SyncQueue.ScheduledTasks
 {
     public class FireRetentionTask : IScheduledTask
     {
-        //private readonly IHttpClient _httpClient;
-        private readonly IJsonSerializer _jsonSerializer;
-        private readonly IUserManager _userManager;
-        private readonly ILogger _logger;
-        private readonly ILogManager _logManager;
-        private readonly IUserDataManager _userDataManager;
-        private readonly IApplicationPaths _applicationPaths;
-
-        //private DbRepo dbRepo = null;
-
-        public FireRetentionTask(ILogManager logManager, ILogger logger, IJsonSerializer jsonSerializer, IUserManager userManager, 
-            IUserDataManager userDataManager, IHttpClient httpClient, IServerApplicationHost appHost, IApplicationPaths applicationPaths)
-        {
-            _jsonSerializer = jsonSerializer;
-            _userManager = userManager;
-            _userDataManager = userDataManager;
-            _logger = logger;
-            _logManager = logManager;
-            _applicationPaths = applicationPaths;
-
-            _logger.Info("Emby.Kodi.SyncQueue.Task: Retention Task Scheduled!");
-
-            //dbRepo = new DbRepo(_applicationPaths.DataPath, _logger, _jsonSerializer);
-        }
-
         public string Key
         {
             get { return "KodiSyncFireRetentionTask"; }
@@ -58,34 +33,19 @@ namespace Emby.Kodi.SyncQueue.ScheduledTasks
             };
         }
 
-        public async Task Execute(CancellationToken cancellationToken, IProgress<double> progress)
+        public Task Execute(CancellationToken cancellationToken, IProgress<double> progress)
         {
             //Is retDays 0.. If So Exit...
-            int retDays;
+            int retDays = 30;
 
-            if (!(Int32.TryParse(Plugin.Instance.Configuration.RetDays, out retDays))) {
-                _logger.Info("Emby.Kodi.SyncQueue.Task: Retention Deletion Not Possible When Retention Days = 0!");
-                return;
-            }
+            retDays = retDays * -1;
+            var dt = DateTimeOffset.UtcNow.AddDays(retDays);
+            var dtl = (long)(dt.Subtract(new DateTimeOffset(1970, 1, 1, 0, 0, 0, 0, TimeSpan.Zero)).TotalSeconds);
+            //DbRepo.DeleteOldData(dtl, _logger);
 
-            if (retDays == 0)
-            {
-                _logger.Info("Emby.Kodi.SyncQueue.Task: Retention Deletion Not Possible When Retention Days = 0!");
-                return;
-            }
+            DbRepo.Instance.DeleteOldData(dtl);
 
-            //Check Database
-            bool result = await Task.Run(() =>
-            {
-                retDays = retDays * -1;
-                var dt = DateTimeOffset.UtcNow.AddDays(retDays);
-                var dtl = (long)(dt.Subtract(new DateTimeOffset(1970, 1, 1, 0, 0, 0, 0, TimeSpan.Zero)).TotalSeconds);
-                //DbRepo.DeleteOldData(dtl, _logger);
-
-                DbRepo.Instance.DeleteOldData(dtl);
-                
-                return true;
-            });
+            return Task.CompletedTask;
         }
 
         public string Name

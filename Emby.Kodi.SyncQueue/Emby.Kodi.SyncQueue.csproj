@@ -2,22 +2,20 @@
 
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;</TargetFrameworks>
-    <AssemblyVersion>2.1.0.0</AssemblyVersion>
-    <FileVersion>2.1.0.0</FileVersion>
+    <AssemblyVersion>2.1.1.0</AssemblyVersion>
+    <FileVersion>2.1.1.0</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Configuration\configPage.html" />
     <None Remove="thumb.jpg" />
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Configuration\configPage.html" />
     <EmbeddedResource Include="thumb.jpg" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="mediabrowser.server.core" Version="4.2.0.6-beta4" />
+    <PackageReference Include="mediabrowser.server.core" Version="4.2.0.18-beta" />
     <PackageReference Include="System.Memory" Version="4.5.3" />
   </ItemGroup>
 

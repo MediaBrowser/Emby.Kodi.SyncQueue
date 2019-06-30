@@ -35,15 +35,7 @@ namespace Emby.Kodi.SyncQueue.EntryPoints
         /// </summary>
         private readonly object _libraryChangedSyncLock = new object();
 
-        private readonly List<LibFolder> _foldersAddedTo = new List<LibFolder>();
-        private readonly List<LibFolder> _foldersRemovedFrom = new List<LibFolder>();
-        private readonly List<LibItem> _itemsAdded = new List<LibItem>();
         private readonly List<LibItem> _itemsRemoved = new List<LibItem>();
-        private readonly List<LibItem> _itemsUpdated = new List<LibItem>();
-
-        //private DbRepo dbRepo = null;
-
-        private CancellationTokenSource cTokenSource = new CancellationTokenSource();
 
         /// <summary>
         /// Gets or sets the library update timer.
@@ -70,105 +62,7 @@ namespace Emby.Kodi.SyncQueue.EntryPoints
         
         public void Run()
         {
-            _libraryManager.ItemAdded += libraryManager_ItemAdded;
-            _libraryManager.ItemUpdated += libraryManager_ItemUpdated;
             _libraryManager.ItemRemoved += libraryManager_ItemRemoved;
-
-            _logger.Info("Emby.Kodi.SyncQueue:  LibrarySyncNotification Startup...");
-        }
-
-        /// <summary>
-        /// Handles the ItemAdded event of the libraryManager control.
-        /// </summary>
-        /// <param name="sender">The source of the event.</param>
-        /// <param name="e">The <see cref="ItemChangeEventArgs"/> instance containing the event data.</param>
-        void libraryManager_ItemAdded(object sender, ItemChangeEventArgs e)
-        {
-            //_logger.Debug(String.Format("Emby.Kodi.SyncQueue:  Item ID: {0}", e.Item.Id.ToString()));
-            //_logger.Debug(String.Format("Emby.Kodi.SyncQueue:  JsonObject: {0}", _jsonSerializer.SerializeToString(e.Item)));
-            //_logger.Debug(String.Format("Emby.Kodi.SyncQueue:  Library GetClientTypeName: {0}", e.Item.GetClientTypeName()));
-
-            var type = -1;
-            if (!FilterItem(e.Item, out type))
-            {
-                return;
-            }
-
-            lock (_libraryChangedSyncLock)
-            {
-                if (LibraryUpdateTimer == null)
-                {
-                    LibraryUpdateTimer = new Timer(LibraryUpdateTimerCallback, null, LibraryUpdateDuration,
-                                                   Timeout.Infinite);
-                }
-                else
-                {
-                    LibraryUpdateTimer.Change(LibraryUpdateDuration, Timeout.Infinite);
-                }
-
-                //if (e.Item.Parent != null)
-                //{
-                //    var folder = new LibFolder()
-                //    {
-                //        Id = e.Item.Parent.Id,
-                //        SyncApiModified = (long)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)).TotalSeconds)
-
-                //    };
-                //    _foldersAddedTo.Add(folder);
-                //}
-
-                var item = new LibItem()
-                {
-                    Id = e.Item.GetClientId(),
-                    SyncApiModified = (long)(DateTimeOffset.UtcNow.Subtract(new DateTimeOffset(1970, 1, 1, 0, 0, 0, 0, TimeSpan.Zero)).TotalSeconds),
-                    ItemType = type,
-                };
-                _logger.Debug(string.Format("Emby.Kodi.SyncQueue: ItemAdded added for DB Saving {0}", e.Item.Id));
-                _itemsAdded.Add(item);
-                
-            }
-        }
-
-        /// <summary>
-        /// Handles the ItemUpdated event of the libraryManager control.
-        /// </summary>
-        /// <param name="sender">The source of the event.</param>
-        /// <param name="e">The <see cref="ItemChangeEventArgs"/> instance containing the event data.</param>
-        void libraryManager_ItemUpdated(object sender, ItemChangeEventArgs e)
-        {
-            //_logger.Debug(String.Format("Emby.Kodi.SyncQueue:  Item ID: {0}", e.Item.Id.ToString()));
-            //_logger.Debug(String.Format("Emby.Kodi.SyncQueue:  JsonObject: {0}", _jsonSerializer.SerializeToString(e.Item)));
-            //_logger.Debug(String.Format("Emby.Kodi.SyncQueue:  Library GetClientTypeName: {0}", e.Item.GetClientTypeName()));
-
-            var type = -1;
-            if (!FilterItem(e.Item, out type))
-            {
-                return;
-            }
-
-            lock (_libraryChangedSyncLock)
-            {
-                if (LibraryUpdateTimer == null)
-                {
-                    LibraryUpdateTimer = new Timer(LibraryUpdateTimerCallback, null, LibraryUpdateDuration,
-                                                   Timeout.Infinite);
-                }
-                else
-                {
-                    LibraryUpdateTimer.Change(LibraryUpdateDuration, Timeout.Infinite);
-                }
-
-                var item = new LibItem()
-                {
-                    Id = e.Item.GetClientId(),
-                    SyncApiModified = (long)(DateTimeOffset.UtcNow.Subtract(new DateTimeOffset(1970, 1, 1, 0, 0, 0, 0,TimeSpan.Zero)).TotalSeconds),
-                    ItemType = type,
-                };
-
-                _logger.Debug(string.Format("Emby.Kodi.SyncQueue: ItemUpdated added for DB Saving {0}", e.Item.Id));
-                _itemsUpdated.Add(item);
-                
-            }
         }
 
         /// <summary>
@@ -178,10 +72,6 @@ namespace Emby.Kodi.SyncQueue.EntryPoints
         /// <param name="e">The <see cref="ItemChangeEventArgs"/> instance containing the event data.</param>
         void libraryManager_ItemRemoved(object sender, ItemChangeEventArgs e)
         {
-            //_logger.Debug(String.Format("Emby.Kodi.SyncQueue:  Item ID: {0}", e.Item.Id.ToString()));
-            //_logger.Debug(String.Format("Emby.Kodi.SyncQueue:  JsonObject: {0}", _jsonSerializer.SerializeToString(e.Item)));
-            //_logger.Debug(String.Format("Emby.Kodi.SyncQueue:  Library GetClientTypeName: {0}", e.Item.GetClientTypeName()));
-
             var type = -1;
             if (!FilterRemovedItem(e.Item, out type))
             {
@@ -199,17 +89,6 @@ namespace Emby.Kodi.SyncQueue.EntryPoints
                 {
                     LibraryUpdateTimer.Change(LibraryUpdateDuration, Timeout.Infinite);
                 }
-
-                //if (e.Item.Parent != null)
-                //{
-                //    var folder = new LibFolder()
-                //    {
-                //        Id = e.Item.Parent.Id,
-                //        SyncApiModified = (long)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc)).TotalSeconds)
-
-                //    };
-                //    _foldersRemovedFrom.Add(folder);
-                //}
 
                 var item = new LibItem()
                 {
@@ -237,25 +116,13 @@ namespace Emby.Kodi.SyncQueue.EntryPoints
                 // Remove dupes in case some were saved multiple times
                 try
                 {
-                    _logger.Info("Emby.Kodi.SyncQueue: Starting Library Sync...");
                     var startTime = DateTimeOffset.UtcNow;                    
-
-                    var itemsAdded = _itemsAdded.GroupBy(i => i.Id).Select(grp => grp.First()).ToList();
 
                     var itemsRemoved = _itemsRemoved.GroupBy(i => i.Id).Select(grp => grp.First()).ToList();
 
-                    var itemsUpdated = _itemsUpdated
-                                        .Where(i => itemsAdded.Where(a => a.Id == i.Id).FirstOrDefault() == null)
-                                        .GroupBy(g => g.Id)
-                                        .Select(grp => grp.First())
-                                        .ToList();
+                    DbRepo.Instance.WriteLibrarySync(itemsRemoved, 2);
 
-                    Task x = PushChangesToDB(itemsAdded, itemsUpdated, itemsRemoved, cTokenSource.Token);
-                    Task.WaitAll(x);                    
-
-                    itemsAdded.Clear();
                     itemsRemoved.Clear();
-                    itemsUpdated.Clear();
 
                     if (LibraryUpdateTimer != null)
                     {
@@ -263,7 +130,6 @@ namespace Emby.Kodi.SyncQueue.EntryPoints
                         LibraryUpdateTimer = null;
                     }
                     TimeSpan dateDiff = DateTimeOffset.UtcNow - startTime;
-                    _logger.Info(String.Format("Emby.Kodi.SyncQueue: Finished Library Sync Taking {0}", dateDiff.ToString("c")));
 
                 }
                 catch (Exception e)
@@ -271,202 +137,43 @@ namespace Emby.Kodi.SyncQueue.EntryPoints
                     _logger.Error(String.Format("Emby.Kodi.SyncQueue: An Error Has Occurred in LibraryUpdateTimerCallback: {0}", e.Message));
                     _logger.ErrorException(e.Message, e);
                 }
-                _itemsAdded.Clear();
                 _itemsRemoved.Clear();
-                _itemsUpdated.Clear();
-                _foldersAddedTo.Clear();
-                _foldersRemovedFrom.Clear();                
             }
-        }
-
-        
-
-        public async Task PushChangesToDB(List<LibItem> itemsAdded, List<LibItem> itemsUpdated, List<LibItem> itemsRemoved, CancellationToken cancellationToken)
-        {
-            List<Task> myTasksList = new List<Task>();
-
-            myTasksList.Add(UpdateLibrary(itemsAdded, "ItemsAddedQueue", 0, cancellationToken));
-            myTasksList.Add(UpdateLibrary(itemsUpdated, "ItemsUpdatedQueue", 1, cancellationToken));
-            myTasksList.Add(UpdateLibrary(itemsRemoved, "ItemsRemovedQueue", 2, cancellationToken));
-
-            Task[] iTasks = myTasksList.ToArray();
-            await Task.WhenAll(iTasks);
-        }
-
-        public Task UpdateLibrary(List<LibItem> Items, string tableName, int status, CancellationToken cancellationToken)
-        {
-            return Task.Run(() =>
-            {
-                var statusType = string.Empty;
-                if (status == 0) { statusType = "Added"; }
-                else if (status == 1) { statusType = "Updated"; }
-                else { statusType = "Removed"; }
-            
-                DbRepo.Instance.WriteLibrarySync(Items, status, cancellationToken);
-
-                _logger.Info(String.Format("Emby.Kodi.SyncQueue: \"LIBRARYSYNC\" {0} {1} items:  {2}", statusType, Items.Count(),
-                    String.Join(",", Items.Select(i => i.Id).ToArray())));
-            });
-        }
-
-        private bool FilterItem(BaseItem item, out int type)
-        {
-            type = -1;
-
-            if (!Plugin.Instance.Configuration.IsEnabled)
-            {
-                return false;
-            }
-
-            if (item.LocationType == LocationType.Virtual)
-            {
-                return false;
-            }
-
-            if (item.GetTopParent() is Channel)
-            {
-                return false;
-            }
-
-
-            var typeName = item.GetClientTypeName();
-            if (string.IsNullOrEmpty(typeName))
-            {
-                return false;
-            }
-
-            switch (typeName)
-            {
-                //MOVIES
-                case "Movie":
-                    if (!Plugin.Instance.Configuration.tkMovies)
-                    {
-                        return false;
-                    }
-                    type = 0;
-                    break;
-                case "BoxSet":
-                    if (!Plugin.Instance.Configuration.tkBoxSets)
-                    {
-                        return false;
-                    }
-                    type = 4;
-                    break;
-                case "Series":
-                case "Season":
-                case "Episode":
-                    if (!Plugin.Instance.Configuration.tkTVShows)
-                    {
-                        return false;
-                    }
-                    type = 1;
-                    break;
-                case "Audio":
-                case "MusicArtist":
-                case "MusicAlbum":
-                    if (!Plugin.Instance.Configuration.tkMusic)
-                    {
-                        return false;
-                    }
-                    type = 2;
-                    break;
-                case "MusicVideo":
-                    if (!Plugin.Instance.Configuration.tkMusicVideos)
-                    {
-                        return false;
-                    }
-                    type = 3;
-                    break;
-                default:
-                    type = -1;
-                    _logger.Debug(String.Format("Emby.Kodi.SyncQueue:  Ingoring Type {0}", typeName));
-                    return false;
-            }                                   
-
-            return true;
         }
 
         private bool FilterRemovedItem(BaseItem item, out int type)
         {
-            type = -1;
-
-            if (!Plugin.Instance.Configuration.IsEnabled)
-            {
-                return false;
-            }
-
-            if (item.LocationType == LocationType.Virtual)
-            {
-                return false;
-            }
-
-            if (item.GetTopParent() is Channel)
-            {
-                return false;
-            }
-
-
             var typeName = item.GetClientTypeName();
-            if (string.IsNullOrEmpty(typeName))
-            {
-                return false;
-            }
 
             switch (typeName)
             {
                 //MOVIES
                 case "Movie":
                 case "Folder":
-                    if (!Plugin.Instance.Configuration.tkMovies)
-                    {
-                        return false;
-                    }
                     type = 0;
                     break;
                 case "BoxSet":
-                    if (!Plugin.Instance.Configuration.tkBoxSets)
-                    {
-                        return false;
-                    }
                     type = 4;
                     break;
                 case "Series":
                 case "Season":
                 case "Episode":
-                    if (!Plugin.Instance.Configuration.tkTVShows)
-                    {
-                        return false;
-                    }
                     type = 1;
                     break;
                 case "Audio":
                 case "MusicArtist":
                 case "MusicAlbum":
-                    if (!Plugin.Instance.Configuration.tkMusic)
-                    {
-                        return false;
-                    }
                     type = 2;
                     break;
                 case "MusicVideo":
-                    if (!Plugin.Instance.Configuration.tkMusicVideos)
-                    {
-                        return false;
-                    }
                     type = 3;
                     break;
                 default:
                     type = -1;
-                    _logger.Debug(String.Format("Emby.Kodi.SyncQueue:  Ingoring Type {0}", typeName));
                     return false;
             }
 
             return true;
-        }
-
-        private void TriggerCancellation()
-        {
-            cTokenSource.Cancel();            
         }
 
         /// <summary>
@@ -474,31 +181,13 @@ namespace Emby.Kodi.SyncQueue.EntryPoints
         /// </summary>
         public void Dispose()
         {
-            if (!cTokenSource.Token.IsCancellationRequested)
+            if (LibraryUpdateTimer != null)
             {
-                TriggerCancellation();
+                LibraryUpdateTimer.Dispose();
+                LibraryUpdateTimer = null;
             }
-            Dispose(true);
-        }
 
-        /// <summary>
-        /// Releases unmanaged and - optionally - managed resources.
-        /// </summary>
-        /// <param name="dispose"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
-        protected virtual void Dispose(bool dispose)
-        {
-            if (dispose)
-            {
-                if (LibraryUpdateTimer != null)
-                {
-                    LibraryUpdateTimer.Dispose();
-                    LibraryUpdateTimer = null;
-                }
-
-                _libraryManager.ItemAdded -= libraryManager_ItemAdded;
-                _libraryManager.ItemUpdated -= libraryManager_ItemUpdated;
-                _libraryManager.ItemRemoved -= libraryManager_ItemRemoved;
-            }
+            _libraryManager.ItemRemoved -= libraryManager_ItemRemoved;
         }
     }
 }
