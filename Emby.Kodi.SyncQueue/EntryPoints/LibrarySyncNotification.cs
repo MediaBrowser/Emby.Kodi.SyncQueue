@@ -14,6 +14,9 @@ using System.Threading.Tasks;
 using Emby.Kodi.SyncQueue.Data;
 using Emby.Kodi.SyncQueue.Entities;
 using MediaBrowser.Controller.Channels;
+using MediaBrowser.Controller.Entities.TV;
+using MediaBrowser.Controller.Entities.Movies;
+using MediaBrowser.Controller.Entities.Audio;
 
 namespace Emby.Kodi.SyncQueue.EntryPoints
 {
@@ -35,7 +38,7 @@ namespace Emby.Kodi.SyncQueue.EntryPoints
         /// </summary>
         private readonly object _libraryChangedSyncLock = new object();
 
-        private readonly List<LibItem> _itemsRemoved = new List<LibItem>();
+        private readonly List<ItemRec> _itemsRemoved = new List<ItemRec>();
 
         /// <summary>
         /// Gets or sets the library update timer.
@@ -58,8 +61,8 @@ namespace Emby.Kodi.SyncQueue.EntryPoints
             _applicationPaths = applicationPaths;
 
         }
-        
-        
+
+
         public void Run()
         {
             _libraryManager.ItemRemoved += libraryManager_ItemRemoved;
@@ -72,8 +75,7 @@ namespace Emby.Kodi.SyncQueue.EntryPoints
         /// <param name="e">The <see cref="ItemChangeEventArgs"/> instance containing the event data.</param>
         void libraryManager_ItemRemoved(object sender, ItemChangeEventArgs e)
         {
-            var type = -1;
-            if (!FilterRemovedItem(e.Item, out type))
+            if (!FilterRemovedItem(e.Item))
             {
                 return;
             }
@@ -90,16 +92,15 @@ namespace Emby.Kodi.SyncQueue.EntryPoints
                     LibraryUpdateTimer.Change(LibraryUpdateDuration, Timeout.Infinite);
                 }
 
-                var item = new LibItem()
+                var item = new ItemRec()
                 {
-                    Id = e.Item.GetClientId(),
-                    SyncApiModified = (long)(DateTimeOffset.UtcNow.Subtract(new DateTimeOffset(1970, 1, 1, 0, 0, 0, 0, TimeSpan.Zero)).TotalSeconds),
-                    ItemType = type
+                    ItemId = e.Item.GetClientId(),
+                    LastModified = (long)(DateTimeOffset.UtcNow.Subtract(new DateTimeOffset(1970, 1, 1, 0, 0, 0, 0, TimeSpan.Zero)).TotalSeconds),
+                    Status = 2
                 };
 
                 _logger.Debug(string.Format("Emby.Kodi.SyncQueue: ItemRemoved added for DB Saving {0}", e.Item.Id));
                 _itemsRemoved.Add(item);
-                
             }
         }
 
@@ -116,21 +117,13 @@ namespace Emby.Kodi.SyncQueue.EntryPoints
                 // Remove dupes in case some were saved multiple times
                 try
                 {
-                    var startTime = DateTimeOffset.UtcNow;                    
-
-                    var itemsRemoved = _itemsRemoved.GroupBy(i => i.Id).Select(grp => grp.First()).ToList();
-
-                    DbRepo.Instance.WriteLibrarySync(itemsRemoved, 2);
-
-                    itemsRemoved.Clear();
+                    DbRepo.Instance.WriteLibrarySync(_itemsRemoved.ToList());
 
                     if (LibraryUpdateTimer != null)
                     {
                         LibraryUpdateTimer.Dispose();
                         LibraryUpdateTimer = null;
                     }
-                    TimeSpan dateDiff = DateTimeOffset.UtcNow - startTime;
-
                 }
                 catch (Exception e)
                 {
@@ -141,39 +134,20 @@ namespace Emby.Kodi.SyncQueue.EntryPoints
             }
         }
 
-        private bool FilterRemovedItem(BaseItem item, out int type)
+        private bool FilterRemovedItem(BaseItem item)
         {
-            var typeName = item.GetClientTypeName();
+            var type = item.GetType();
 
-            switch (typeName)
-            {
-                //MOVIES
-                case "Movie":
-                case "Folder":
-                    type = 0;
-                    break;
-                case "BoxSet":
-                    type = 4;
-                    break;
-                case "Series":
-                case "Season":
-                case "Episode":
-                    type = 1;
-                    break;
-                case "Audio":
-                case "MusicArtist":
-                case "MusicAlbum":
-                    type = 2;
-                    break;
-                case "MusicVideo":
-                    type = 3;
-                    break;
-                default:
-                    type = -1;
-                    return false;
-            }
-
-            return true;
+            return type == typeof(Movie) ||
+                type == typeof(Folder) ||
+                type == typeof(BoxSet) ||
+                type == typeof(Series) ||
+                type == typeof(Season) ||
+                type == typeof(Episode) ||
+                type == typeof(Audio) ||
+                type == typeof(MusicArtist) ||
+                type == typeof(MusicAlbum) ||
+                type == typeof(MusicVideo);
         }
 
         /// <summary>
