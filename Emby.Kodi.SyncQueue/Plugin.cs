@@ -5,7 +5,6 @@ using MediaBrowser.Common.Configuration;
 using MediaBrowser.Common.Plugins;
 using MediaBrowser.Model.Logging;
 using MediaBrowser.Model.Serialization;
-using Emby.Kodi.SyncQueue.Configuration;
 using MediaBrowser.Model.Plugins;
 using Emby.Kodi.SyncQueue.Data;
 using MediaBrowser.Model.IO;
@@ -14,47 +13,20 @@ using System.IO;
 
 namespace Emby.Kodi.SyncQueue
 {
-    class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages, IHasThumbImage
+    class Plugin : BasePlugin, IHasWebPages, IHasThumbImage
     {
         public static ILogger Logger { get; set; }
 
-        public Plugin(IApplicationPaths applicationPaths, IXmlSerializer xmlSerializer, ILogger logger, IJsonSerializer json, IFileSystem fileSystem)
-            : base(applicationPaths, xmlSerializer)
+        public Plugin(IApplicationPaths applicationPaths, ILogger logger, IJsonSerializer json, IFileSystem fileSystem)
         {
             Instance = this;
 
             Logger = logger;
 
-            //Logger.Info("Emby.Kodi.SyncQueue: Write Out Reference if it Doesn't Exist!");
-
-            //if (!File.Exists(Path.Combine(applicationPaths.ProgramSystemPath, "Emby.Kodi.NanoApi.dll")) ||
-            //    !File.Exists(Path.Combine(applicationPaths.ProgramSystemPath, "Emby.Kodi.SyncJson.dll")))
-            //{
-            //    var names = Assembly.GetEntryAssembly().GetManifestResourceNames();
-            //    foreach (var name in names)
-            //    {
-            //        Logger.Info("Emby.Kodi.SyncQueue: " + name);
-            //    }
-            //    using (Stream input = Assembly.GetExecutingAssembly().GetManifestResourceStream("Emby.Kodi.SyncQueue.Resources.Emby.Kodi.NanoApi.dll"))
-            //    using (Stream output = File.Create(Path.Combine(applicationPaths.ProgramSystemPath, "NanoApi.JsonFile.dll")))
-            //    {
-            //        CopyStream(input, output);
-            //    }
-
-            //    using (Stream input = Assembly.GetExecutingAssembly().GetManifestResourceStream("Emby.Kodi.SyncQueue.Resources.Emby.Kodi.SyncJson.dll"))
-            //    using (Stream output = File.Create(Path.Combine(applicationPaths.ProgramSystemPath, "NanoApi.JsonFile.dll")))
-            //    {
-            //        CopyStream(input, output);
-            //    }
-            //}
-
-            Logger.Info("Emby.Kodi.SyncQueue IS NOW STARTING!!!");
-
             DbRepo.dbPath = applicationPaths.DataPath;
             DbRepo.json = json;
             DbRepo.logger = logger;
             DbRepo.fileSystem = fileSystem;
-            DbRepo.Instance.Initialize();
         }
 
         private Guid _id = new Guid("b0daa30f-2e09-4083-a6ce-459d9fecdd80");
