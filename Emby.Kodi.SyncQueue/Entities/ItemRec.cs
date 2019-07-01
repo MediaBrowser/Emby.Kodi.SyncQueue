@@ -14,11 +14,5 @@ namespace Emby.Kodi.SyncQueue.Entities
         public string ItemId { get; set; }
         public long LastModified { get; set; }
         public int Status { get; set; }
-
-        // 0 = Movies
-        // 1 = TVShows
-        // 2 = Music
-        // 3 = Music Videos
-        // 4 = BoxSets
     }
 }

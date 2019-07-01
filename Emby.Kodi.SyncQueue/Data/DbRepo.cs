@@ -78,9 +78,9 @@ namespace Emby.Kodi.SyncQueue.Data
 
         public void WriteLibrarySync(List<ItemRec> Items)
         {
-            lock (_itemLock)
+            if (Items.Count > 0)
             {
-                if (Items.Count > 0)
+                lock (_itemLock)
                 {
                     itemRecs.Insert(Items);
                 }

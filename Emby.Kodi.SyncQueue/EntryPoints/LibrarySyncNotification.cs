@@ -84,8 +84,7 @@ namespace Emby.Kodi.SyncQueue.EntryPoints
             {
                 if (LibraryUpdateTimer == null)
                 {
-                    LibraryUpdateTimer = new Timer(LibraryUpdateTimerCallback, null, LibraryUpdateDuration,
-                                                   Timeout.Infinite);
+                    LibraryUpdateTimer = new Timer(LibraryUpdateTimerCallback, null, LibraryUpdateDuration, Timeout.Infinite);
                 }
                 else
                 {
@@ -110,7 +109,6 @@ namespace Emby.Kodi.SyncQueue.EntryPoints
         /// <param name="state">The state.</param>
         private void LibraryUpdateTimerCallback(object state)
         {
-
             lock (_libraryChangedSyncLock)
             {
 
@@ -118,18 +116,13 @@ namespace Emby.Kodi.SyncQueue.EntryPoints
                 try
                 {
                     DbRepo.Instance.WriteLibrarySync(_itemsRemoved.ToList());
-
-                    if (LibraryUpdateTimer != null)
-                    {
-                        LibraryUpdateTimer.Dispose();
-                        LibraryUpdateTimer = null;
-                    }
                 }
                 catch (Exception e)
                 {
                     _logger.Error(String.Format("Emby.Kodi.SyncQueue: An Error Has Occurred in LibraryUpdateTimerCallback: {0}", e.Message));
                     _logger.ErrorException(e.Message, e);
                 }
+
                 _itemsRemoved.Clear();
             }
         }
