@@ -13,16 +13,10 @@ using System.IO;
 
 namespace Emby.Kodi.SyncQueue
 {
-    class Plugin : BasePlugin, IHasWebPages, IHasThumbImage
+    class Plugin : BasePlugin, IHasThumbImage
     {
-        public static ILogger Logger { get; set; }
-
         public Plugin(IApplicationPaths applicationPaths, ILogger logger, IJsonSerializer json, IFileSystem fileSystem)
         {
-            Instance = this;
-
-            Logger = logger;
-
             DbRepo.dbPath = applicationPaths.DataPath;
             DbRepo.json = json;
             DbRepo.logger = logger;
@@ -54,24 +48,6 @@ namespace Emby.Kodi.SyncQueue
             {
                 return "Companion for Kodi add-ons. Provides dynamic strms and shorter sync times for Emby for Kodi.";
             }
-        }
-
-        /// <summary>
-        /// Gets the instance.
-        /// </summary>
-        /// <value>The instance.</value>
-        public static Plugin Instance { get; private set; }
-
-        public IEnumerable<PluginPageInfo> GetPages()
-        {
-            return new PluginPageInfo[]
-            {
-                new PluginPageInfo
-                {
-                    Name = "Emby.Kodi.SyncQueue",
-                    EmbeddedResourcePath = "Emby.Kodi.SyncQueue.Configuration.configPage.html"
-                }
-            };
         }
 
         public Stream GetThumbImage()
