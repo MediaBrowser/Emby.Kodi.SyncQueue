@@ -14,7 +14,7 @@ using MediaBrowser.Model.Tasks;
 
 namespace Emby.Kodi.SyncQueue.ScheduledTasks
 {
-    public class FireRetentionTask : IScheduledTask
+    public class FireRetentionTask : IScheduledTask, IConfigurableScheduledTask
     {
         public string Key
         {
@@ -27,8 +27,8 @@ namespace Emby.Kodi.SyncQueue.ScheduledTasks
 
                 new TaskTriggerInfo
                 {
-                    Type = TaskTriggerInfo.TriggerDaily,
-                    TimeOfDayTicks = TimeSpan.FromMinutes(1).Ticks
+                    Type = TaskTriggerInfo.TriggerInterval,
+                    IntervalTicks = TimeSpan.FromHours(24).Ticks
                 }
             };
         }
@@ -69,6 +69,12 @@ namespace Emby.Kodi.SyncQueue.ScheduledTasks
                     "If Retention Days > 0 then this will remove the old data to keep information flowing quickly";
             }
         }
+
+        public bool IsHidden => true;
+
+        public bool IsEnabled => true;
+
+        public bool IsLogged => true;
     }
 
 }
