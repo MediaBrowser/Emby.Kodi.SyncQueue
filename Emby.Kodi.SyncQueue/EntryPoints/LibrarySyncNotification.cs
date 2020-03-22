@@ -94,8 +94,7 @@ namespace Emby.Kodi.SyncQueue.EntryPoints
                 var item = new ItemRec()
                 {
                     ItemId = e.Item.GetClientId(),
-                    LastModified = (long)(DateTimeOffset.UtcNow.Subtract(new DateTimeOffset(1970, 1, 1, 0, 0, 0, 0, TimeSpan.Zero)).TotalSeconds),
-                    Status = 2
+                    LastModified = (long)(DateTimeOffset.UtcNow.Subtract(new DateTimeOffset(1970, 1, 1, 0, 0, 0, 0, TimeSpan.Zero)).TotalSeconds)
                 };
 
                 _logger.Debug(string.Format("Emby.Kodi.SyncQueue: ItemRemoved added for DB Saving {0}", e.Item.Id));

@@ -1,5 +1,4 @@
-﻿using NanoApi.JsonFile;
-using System;
+﻿using System;
 
 namespace Emby.Kodi.SyncQueue.Entities
 {
@@ -9,10 +8,7 @@ namespace Emby.Kodi.SyncQueue.Entities
         //Status 1 = Updated
         //Status 2 = Removed
 
-        [PrimaryKey]
-        public int Id { get; set; }
         public string ItemId { get; set; }
         public long LastModified { get; set; }
-        public int Status { get; set; }
     }
 }

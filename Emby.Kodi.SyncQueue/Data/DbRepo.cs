@@ -55,15 +55,13 @@ namespace Emby.Kodi.SyncQueue.Data
 
             fileSystem.CreateDirectory(dataPath);
 
-            itemRecs = NanoApi.JsonFile<ItemRec>.GetInstance(dataPath, dbItem, Encoding.UTF8, null, null);
-            if (!itemRecs.CheckVersion("1.4.0"))
-                itemRecs.ChangeHeader("1.4.0", "Item Repository", "This repository stores item changes per user as pushed from Emby.");
+            itemRecs = new NanoApi.JsonFile<ItemRec>(dataPath, dbItem, Encoding.UTF8);
         }
 
         public List<string> GetItems(long dtl)
         {
             return itemRecs
-                .Select(x => x.LastModified > dtl && x.Status == 2)
+                .Select(x => x.LastModified > dtl)
                 .Select(i => i.ItemId)
                 .ToList();
         }
@@ -87,8 +85,6 @@ namespace Emby.Kodi.SyncQueue.Data
             }
         }
 
-        #region Dispose
-
         public void Dispose()
         {
             Dispose(true);
@@ -105,7 +101,5 @@ namespace Emby.Kodi.SyncQueue.Data
                 }
             }
         }
-
-        #endregion
     }
 }
