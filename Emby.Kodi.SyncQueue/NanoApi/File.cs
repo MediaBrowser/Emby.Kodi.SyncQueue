@@ -52,6 +52,10 @@ namespace NanoApi
                 return null;
 
             Foo<T> foo = DbRepo.json.DeserializeFromString<Foo<T>>(DbRepo.fileSystem.ReadAllText(path));
+            if (foo == null)
+            {
+                return null;
+            }
             if (foo.data == null)
                 foo.data = new List<T>();
             return foo;
