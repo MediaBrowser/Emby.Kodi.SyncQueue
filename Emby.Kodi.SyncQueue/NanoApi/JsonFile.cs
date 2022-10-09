@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using MediaBrowser.Model.Logging;
 
 namespace NanoApi
 {
@@ -11,16 +12,16 @@ namespace NanoApi
     {
         private File file { get; set; }
 
-        public JsonFile(string path, string filename, Encoding encoding = null)
+        public JsonFile(string path, string filename, Encoding encoding, ILogger logger)
         {
-            this.file = new File(path, filename, encoding);
+            this.file = new File(path, filename, encoding, logger);
         }
 
         public int Insert(List<T> list)
         {
             Foo<T> foo = this.file.Read<T>();
             if (foo == null)
-                foo = FooHelper.Create<T>();
+                foo = new Foo<T>();
 
             foreach (T current in list)
             {

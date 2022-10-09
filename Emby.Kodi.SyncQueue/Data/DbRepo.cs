@@ -55,7 +55,7 @@ namespace Emby.Kodi.SyncQueue.Data
 
             fileSystem.CreateDirectory(dataPath);
 
-            itemRecs = new NanoApi.JsonFile<ItemRec>(dataPath, dbItem, Encoding.UTF8);
+            itemRecs = new NanoApi.JsonFile<ItemRec>(dataPath, dbItem, Encoding.UTF8, logger);
         }
 
         public List<string> GetItems(long dtl)
